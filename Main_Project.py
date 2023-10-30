@@ -50,22 +50,30 @@ class Main(tk.Frame):
                                 command=self.view_records)
         btn_refresh.pack(side=tk.LEFT)
 
+        #Кнопка удаления
+        btn_del = tk.Button(toolbar, text="Удалить",
+                            bg="#d7d7d7", bd=0,
+                            command=self.delete_records)
+        btn_del.pack(side=tk.LEFT)
+
         # Таблица
 
         self.tree = ttk.Treeview(root,
-                                 columns=("name","phone","email","salary" ),
+                                 columns=("id","name","phone","email", "salary"),
                                  height=45,
                                  show="headings")
         
-        self.tree.column("name", width=160, anchor=tk.CENTER)
-        self.tree.column("phone", width=160, anchor=tk.CENTER)
-        self.tree.column("email", width=160, anchor=tk.CENTER)
-        self.tree.column("salary", width=160, anchor=tk.CENTER)
+        self.tree.column("id", width=45, anchor=tk.CENTER)
+        self.tree.column("name", width=150, anchor=tk.CENTER)
+        self.tree.column("phone", width=150, anchor=tk.CENTER)
+        self.tree.column("email", width=150, anchor=tk.CENTER)
+        self.tree.column("salary", width=150, anchor=tk.CENTER)
 
+        self.tree.heading("id", text="id")
         self.tree.heading("name", text="ФИО")
         self.tree.heading("phone", text="Телефон")
-        self.tree.heading("email", text="Почта")
-        self.tree.heading("salary", text="Зарплата")
+        self.tree.heading("email", text="Электронная-Почта")
+        self.tree.heading("salary", text="зарплата")
 
         self.tree.pack(side=tk.LEFT)
 
@@ -100,9 +108,9 @@ class Main(tk.Frame):
         id = self.tree.set(self.tree.selection()[0], "#1")
         self.db.cur.execute("""
             UPDATE users
-            SET name = ?, phone = ?, email = ?, salary = ?,
+            SET name = ?, phone = ?, email = ?, salary = ?
             WHERE id = ?
-        """, (name, phone, email, salary))
+        """, (name, phone, email, salary, id))
         self.db.conn.commit()
         self.view_records()
 
@@ -142,7 +150,7 @@ class Child(tk.Toplevel):
     # Инициализируем виджеты для дочернего окна
     def init_child(self):
         self.title("Добавление сотрудника")
-        self.geometry("400x250")
+        self.geometry("400x200")
         self.resizable(False, False)
 
         # Перехватываем все события
@@ -159,7 +167,7 @@ class Child(tk.Toplevel):
         label_name.place(x=50, y=80)
         label_name = tk.Label(self, text="E-mail")
         label_name.place(x=50, y=110)
-        label_name = tk.Label(self, text="Salary")
+        label_name = tk.Label(self, text="зарплата")
         label_name.place(x=50, y=140)
 
         self.entry_name = tk.Entry(self)
@@ -191,7 +199,7 @@ class Update(Child):
         self.default_data()
 
     def init_update(self):
-        self.title("Изменение сотрудника")
+        self.title("Изменение контакта")
         self.btn_add.destroy()
         self.btn_upd = tk.Button(self, text="Изменить")
         self.btn_upd.bind("<Button-1>",
@@ -208,6 +216,8 @@ class Update(Child):
         row = self.db.cur.fetchone()
         self.entry_name.insert(0, row[1])
         self.entry_phone.insert(0, row[2])
+        self.entry_email.insert(0, row[3])
+        self.entry_salary.insert(0, row[4])
 
 class Search(tk.Toplevel):
     def __init__(self):
@@ -248,10 +258,11 @@ class Db:
         self.conn = sqlite3.connect("contacts.db")
         self.cur = self.conn.cursor()
         self.cur.execute("""CREATE TABLE IF NOT EXISTS users (
+                         id INTEGER PRIMARY KEY,
                          name TEXT,
                          phone TEXT,
                          email TEXT,
-                         salary TEXT
+                         salary INTEGER
         )""")
         self.conn.commit()
 
@@ -266,7 +277,8 @@ if __name__ == "__main__":
     root = tk.Tk()
     db = Db()
     app = Main(root)
-    root.title("Список сотрудников")
+    app.pack()
+    root.title("список сотрудников")
     root.geometry("665x450")
     root.resizable(False, False)
     root.mainloop()
